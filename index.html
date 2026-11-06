@@ -96,6 +96,15 @@ input[type=color]{width:44px;height:36px;padding:2px;cursor:pointer}
 .pow{position:fixed;left:0;top:0;pointer-events:none;font-weight:900;font-size:28px;color:#ffd84a;-webkit-text-stroke:1px #7a3b00;text-shadow:0 2px 0 #7a3b00;animation:pow .7s ease-out forwards}
 @keyframes pow{from{opacity:1;transform:translate(-50%,-50%) scale(.6)}to{opacity:0;transform:translate(-50%,-220%) scale(1.5)}}
 button b{font-weight:inherit}
+/* 🕹 터치 조이스틱 (휴대폰·태블릿) */
+#joy{position:fixed;left:calc(18px + env(safe-area-inset-left,0px));bottom:calc(var(--joyB,170px) + env(safe-area-inset-bottom,0px));width:124px;height:124px;border-radius:50%;background:rgba(43,45,42,.45);border:2px solid rgba(242,239,230,.35);touch-action:none;z-index:6;-webkit-user-select:none;user-select:none}
+#joy::before{content:"";position:absolute;inset:30%;border-radius:50%;border:1px dashed rgba(242,239,230,.25)}
+#joyKnob{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:rgba(242,239,230,.88);box-shadow:0 2px 8px rgba(0,0,0,.35);pointer-events:none;transition:transform .12s ease-out}
+#joy.on #joyKnob{transition:none;background:#f2d98a}
+#joyJump{position:fixed;right:calc(22px + env(safe-area-inset-right,0px));bottom:calc(var(--joyB,170px) + 30px + env(safe-area-inset-bottom,0px));width:68px;height:68px;border-radius:50%;padding:0;font-size:30px;background:rgba(43,45,42,.6);border:2px solid rgba(242,239,230,.4);z-index:6;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+html.touchLand #ui{width:calc(100% - 340px)!important;min-width:0}   /* 가로 화면: 조이스틱·점프 버튼이 양옆에 오도록 버튼 줄을 가운데로 */
+html.touchLand #joyJump{bottom:calc(var(--joyB,16px) + 28px + env(safe-area-inset-bottom,0px))}
+#joyJump:active{transform:scale(.92);background:rgba(111,163,127,.7)}
 #actRow button{border-color:var(--accent);background:#3f4f43}
 @media(max-width:600px){#hint{display:none}}
 /* 📱 휴대폰: 아이콘만 한 줄 (옆으로 밀어서 더 보기), 상황 버튼은 크게, 채팅·입력칸 작게 */
@@ -187,6 +196,8 @@ button b{font-weight:inherit}
     <span id="hint">WASD 이동 · Space 점프 · E 앉기·눕기 · F 때리기/차기 · C 커피 · O 오너먼트 · G 책상 엎기 · T 종이 · X 창문 · B 춤 · Q 화이트보드 · Enter 채팅</span>
   </div>
 </div>
+<div id="joy" hidden aria-label="이동 조이스틱"><div id="joyKnob"></div></div>
+<button id="joyJump" hidden aria-label="점프">🦘</button>
 <div class="toast" id="leaveToast" hidden><span>🌙 6시 30분이에요! 오늘도 수고했어요, 퇴근하세요~</span><button id="leaveClose">닫기</button></div>
 <div class="toast" id="clubTag" hidden>🪩 클럽 모드 ON</div>
 <div id="ornTip" hidden></div>
@@ -1521,6 +1532,31 @@ function cupFx(e, t, flat){
   if(on) e.cfBar.style.width = Math.max(0, 100*(1 - (ph - BREW - DRINK)/BOOST)).toFixed(0) + '%';
 }
 
+/* ---------- 🕹 터치 조이스틱: 휴대폰·태블릿에서 왼손으로 이동, 오른쪽 버튼으로 점프 ---------- */
+const joyEl = $('joy'), joyKnob = $('joyKnob'), joyJump = $('joyJump');
+const joy = {id:null, x:0, y:0, on:false};
+let isTouch = matchMedia('(pointer: coarse)').matches;
+addEventListener('pointerdown', e => { if(e.pointerType === 'touch') isTouch = true; }, {capture:true, passive:true});
+function moveJoy(e){
+  const r = joyEl.getBoundingClientRect(), R = r.width/2;
+  let x = (e.clientX - (r.left + R))/R, y = (e.clientY - (r.top + R))/R; const m = Math.hypot(x, y);
+  if(m > 1){ x /= m; y /= m; }
+  joy.x = x; joy.y = y; joyKnob.style.transform = `translate(${x*R*.62}px, ${y*R*.62}px)`;
+}
+function endJoy(){ joy.on = false; joy.id = null; joy.x = joy.y = 0; joyKnob.style.transform = ''; joyEl.classList.remove('on'); }
+joyEl.addEventListener('pointerdown', e => { e.preventDefault(); joyEl.setPointerCapture(e.pointerId); joy.id = e.pointerId; joy.on = true; joyEl.classList.add('on'); target = null; moveJoy(e); });
+joyEl.addEventListener('pointermove', e => { if(e.pointerId === joy.id) moveJoy(e); });
+['pointerup','pointercancel','lostpointercapture'].forEach(ev => joyEl.addEventListener(ev, e => { if(e.pointerId === joy.id) endJoy(); }));
+joyJump.addEventListener('pointerdown', e => { e.preventDefault(); hop(); });
+let joyB = -1;
+function updateJoyUI(){
+  const show = isTouch && joined && wbModal.hidden && ornModal.hidden;
+  if(joyEl.hidden === show){ joyEl.hidden = joyJump.hidden = !show; if(!show) endJoy(); }
+  const land = show && innerHeight <= 500 && innerWidth > innerHeight;
+  if(document.documentElement.classList.contains('touchLand') !== land) document.documentElement.classList.toggle('touchLand', land);
+  if(show){ const b = land ? 16 : $('ui').offsetHeight + 22; if(b !== joyB){ joyB = b; document.documentElement.style.setProperty('--joyB', b + 'px'); } }   // 하단 버튼 줄 바로 위에
+}
+
 /* ---------- 🎄 오너먼트: 트리 앞에서 O → 5가지 모양 중 골라 기본 디자인 그대로 또는 직접 그리기·글씨로 꾸며서 달기 ---------- */
 const ORN_TYPES = [['볼','🔴'],['별','⭐'],['종','🔔'],['양말','🧦'],['진저쿠키','🍪']];
 const ORN_COLS = ['#d62f2f','#2f8a4f','#e3b53b','#c8d0d8','#2f6fd6','#e26fa3','#8a4fd6','#f4f1ea'];
@@ -2155,9 +2191,13 @@ function frame(now){
   const dt = Math.min(.05,(now-prev)/1000), t = now/1000; prev = now;
   meMoving = false;
   if(joined && me.jumpT != null && t - me.jumpT > JUMP_DUR) respawn();
+  if(joined && me.seat >= 0 && !busy() && joy.on && Math.hypot(joy.x, joy.y) > .5) standUp();   // 앉아 있을 때 조이스틱을 밀면 일어남
+  updateJoyUI();
   if(joined && me.seat < 0 && !busy()){
-    const kx = (keys.arrowright||keys.d?1:0)-(keys.arrowleft||keys.a?1:0);
-    const kz = (keys.arrowdown||keys.s?1:0)-(keys.arrowup||keys.w?1:0);
+    let kx = (keys.arrowright||keys.d?1:0)-(keys.arrowleft||keys.a?1:0);
+    let kz = (keys.arrowdown||keys.s?1:0)-(keys.arrowup||keys.w?1:0), jm = 1;
+    const jmag = Math.hypot(joy.x, joy.y);
+    if(!kx && !kz && joy.on && jmag > .15){ kx = joy.x; kz = joy.y; jm = Math.min(1, (jmag - .15)/.6 + .25); target = null; }   // 조이스틱: 살짝 밀면 천천히, 끝까지 밀면 빠르게
     let dx = 0, dz = 0;
     if(kx || kz){ const sn = Math.sin(camYaw), cs = Math.cos(camYaw), fw = -kz; dx = cs*kx - sn*fw; dz = -sn*kx - cs*fw; }   // 화면 기준 위/아래/좌/우
     if(!dx && !dz && target){
@@ -2166,7 +2206,7 @@ function frame(now){
     }
     if(dx || dz){
       const l = Math.hypot(dx,dz), ox = me.x, oz = me.z;
-      const sp = 5*(caffeine(t) ? 1.6 : 1), stepLen = sp*dt;                   // 커피 마신 뒤엔 1.6배 빠르게
+      const sp = 5*(caffeine(t) ? 1.6 : 1), stepLen = sp*dt*jm;                   // 커피 마신 뒤엔 1.6배 빠르게
       const clampX = v => Math.min(13.5, Math.max(-13.5, v)), clampZ = v => Math.min(17.4, Math.max(-7, v));
       const stuck = blockedBox(me.x, me.z);                                   // 혹시 물체 안에 끼어 있으면 빠져나올 수 있게 허용
       let [nx, nz] = pushOut(clampX(me.x + dx/l*stepLen), clampZ(me.z + dz/l*stepLen));
