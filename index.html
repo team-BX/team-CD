@@ -1875,7 +1875,9 @@ function thudSound(vol=1){
 
 /* ---------- 상태·네트워크 ---------- */
 const players = {};
-const me = {id:Math.random().toString(36).slice(2,9), name:'', x:0, z:10.5, r:0, seat:-1, msg:'', color:'', bot:'', hcol:'', outfit:0, hair:0, scr:0, hit:0, punchT:-9, ico:'📌', hop:0, hopT:-9, cof:0, cofT:-99, dance:0, afk:0, fall:0, fallT:-99, paper:0, pf:0, pu:0, pv:0, kick:0, kp:0, kickT:-9, jump:0, jw:0, jumpT:null, jfrom:null, flip:0, fd:0};
+// 새로고침해도 같은 캐릭터로 돌아오도록 id를 탭 단위로 저장 (이전엔 새로고침마다 새 id → 옛 캐릭터가 서버에서 지워질 때까지 남아 있었음)
+const myId = (() => { try{ let v = sessionStorage.getItem('pid'); if(!/^[a-z0-9]{7}$/.test(v||'')){ v = Math.random().toString(36).slice(2,9).padEnd(7,'0'); sessionStorage.setItem('pid', v); } return v; }catch(e){ return Math.random().toString(36).slice(2,9); } })();
+const me = {id:myId, name:'', x:0, z:10.5, r:0, seat:-1, msg:'', color:'', bot:'', hcol:'', outfit:0, hair:0, scr:0, hit:0, punchT:-9, ico:'📌', hop:0, hopT:-9, cof:0, cofT:-99, dance:0, afk:0, fall:0, fallT:-99, paper:0, pf:0, pu:0, pv:0, kick:0, kp:0, kickT:-9, jump:0, jw:0, jumpT:null, jfrom:null, flip:0, fd:0};
 let target = null, joined = false, net = null, camX = 0, camZ = 8;
 const keys = {};
 
@@ -2025,7 +2027,9 @@ async function enter(){
 }
 goBtn.onclick = enter;
 nickEl.addEventListener('keydown', e => { if(e.key === 'Enter') enter(); });
+// 모바일은 beforeunload가 안 불릴 때가 많아 pagehide도 사용. 새로고침 때는 같은 id로 바로 다시 들어오므로 괜찮음
 addEventListener('beforeunload', () => net && net.leave());
+addEventListener('pagehide', () => net && net.leave());
 
 /* ---------- 입력·버튼 ---------- */
 const MOVE = ['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'];
