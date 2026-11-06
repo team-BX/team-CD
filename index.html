@@ -86,6 +86,11 @@ input[type=color]{width:44px;height:36px;padding:2px;cursor:pointer}
 #ornMsg{font-size:12px;opacity:.85;min-height:16px}
 .primary{background:var(--accent);color:#17231b;border:0;font-weight:700}
 #ornTip{position:fixed;left:0;top:0;pointer-events:none;background:rgba(43,45,42,.95);border:1px solid #55594f;border-radius:8px;padding:4px 8px;font-size:12px;z-index:12;transform:translate(14px,-130%);white-space:nowrap}
+#ornZoom{position:fixed;inset:0;background:rgba(10,14,12,.8);display:flex;align-items:center;justify-content:center;padding:16px;z-index:22;cursor:zoom-out}
+#ornZoom .zbox{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 22px 14px;border-radius:16px;background:radial-gradient(circle at 50% 38%,#24402e,#101c15);border:1px solid #55594f;cursor:default;animation:pop .18s ease-out}
+#ornZoomCv{width:min(74vmin,440px);height:min(74vmin,440px);display:block}
+#ornZoomCap{font-size:14px;font-weight:600;text-align:center}
+#ornZoomClose{position:absolute;right:8px;top:8px;width:36px;height:36px;border-radius:50%;padding:0;font-size:18px;line-height:1}
 #wbCanvas{width:100%;aspect-ratio:3/2;background:#fff;border-radius:8px;touch-action:none;cursor:crosshair;display:block}
 #wbColors{display:flex;gap:6px}
 .grp{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center}
@@ -122,7 +127,7 @@ html.touchLand #joyJump{bottom:calc(var(--joyB,16px) + 28px + env(safe-area-inse
   #msgClear{display:none}
   #msgRow button{padding:7px 10px;flex:0 0 auto}
   #msgIn,#chatIn,#nameIn,#emojiIn,#ornText{font-size:16px}           /* 아이폰에서 입력할 때 화면이 확대되지 않게 */
-  #stylePanel,#emojiPanel,#photoPanel,#lunchPanel{max-height:46vh;overflow-y:auto;width:100%}
+  #stylePanel,#emojiPanel,#photoPanel{max-height:46vh;overflow-y:auto;width:100%}
   .hue{width:100px!important}
   #chat{width:min(250px,64vw);gap:4px}
   #chatLog{max-height:84px;font-size:12px;padding:6px 8px}
@@ -147,11 +152,6 @@ html.touchLand #joyJump{bottom:calc(var(--joyB,16px) + 28px + env(safe-area-inse
     <button id="photoDel">비우기</button>
     <input type="file" id="photoFile" accept="image/*" hidden>
     <span class="lbl" id="photoMsg">왼쪽 벽 액자에 붙어요</span>
-  </div>
-  <div class="row" id="lunchPanel" hidden>
-    <button data-lunch="안에서 🍱">안에서 🍱</button>
-    <button data-lunch="밖에서 🍜">밖에서 🍜</button>
-    <button data-lunch="">선택 지우기</button>
   </div>
   <div class="row" id="stylePanel" hidden>
     <div class="sec">
@@ -187,13 +187,12 @@ html.touchLand #joyJump{bottom:calc(var(--joyB,16px) + 28px + env(safe-area-inse
     <button id="sit" aria-label="앉기·눕기" title="앉기·눕기"><b>🪑</b><span class="tx"> 앉기·눕기</span><span class="key"> (E)</span></button>
     <button id="hopBtn" aria-label="점프" title="점프"><b>🦘</b><span class="tx"> 점프</span><span class="key"> (Space)</span></button>
     <button id="danceBtn" aria-label="춤" title="춤"><b>💃</b><span class="tx"> 춤</span><span class="key"> (B)</span></button>
-    <button id="lunchBtn" aria-label="점심" title="점심"><b>🍱</b><span class="tx"> 점심</span></button>
     <button id="styleBtn" aria-label="꾸미기" title="꾸미기"><b>👕</b><span class="tx"> 꾸미기</span></button>
     <button id="photoBtn" aria-label="사진" title="사진"><b>🖼</b><span class="tx"> 사진</span></button>
     <button id="viewBtn" title="시점 처음으로" aria-label="시점 초기화">🎥</button>
     <button id="muteBtn" title="효과음 켜기/끄기" aria-label="효과음">🔊</button>
     <span id="count"></span>
-    <span id="hint">WASD 이동 · Space 점프 · E 앉기·눕기 · F 때리기/차기 · C 커피 · O 오너먼트 · G 책상 엎기 · T 종이 · X 창문 · B 춤 · Q 화이트보드 · Enter 채팅</span>
+    <span id="hint">WASD 이동 · Space 점프 · E 앉기·눕기 · F 때리기/차기 · C 커피 · O 오너먼트(클릭하면 확대) · G 책상 엎기 · T 종이 · X 창문 · B 춤 · Q 화이트보드 · Enter 채팅</span>
   </div>
 </div>
 <div id="joy" hidden aria-label="이동 조이스틱"><div id="joyKnob"></div></div>
@@ -201,6 +200,7 @@ html.touchLand #joyJump{bottom:calc(var(--joyB,16px) + 28px + env(safe-area-inse
 <div class="toast" id="leaveToast" hidden><span>🌙 6시 30분이에요! 오늘도 수고했어요, 퇴근하세요~</span><button id="leaveClose">닫기</button></div>
 <div class="toast" id="clubTag" hidden>🪩 클럽 모드 ON</div>
 <div id="ornTip" hidden></div>
+<div id="ornZoom" hidden><div class="zbox" role="dialog" aria-modal="true" aria-label="오너먼트 확대"><button id="ornZoomClose" aria-label="닫기 (Esc)" title="닫기 (Esc)">✕</button><canvas id="ornZoomCv" width="512" height="512"></canvas><div id="ornZoomCap"></div></div></div>
 <div id="ornModal" hidden><div class="ornBox">
   <div class="wbBar"><strong>🎄 오너먼트 만들기</strong><span class="sp"></span><button id="ornClose">닫기 ✕</button></div>
   <div class="ornBody">
@@ -590,8 +590,7 @@ function show(id, isMe, s, x, z, r, moving, t){
   if(e.hc !== lk.hcol){ e.hc = lk.hcol; e.hairM.color.set(lk.hcol); }
   rageFx(e, t);
   setFace(e, (lying || down || afk) ? 'sleep' : (e.rage > .12 ? 'angry' : 'normal'));  // 누우면 눈 감기, 때리면 화난 얼굴
-  const lunch = s.lunch || '', msg = s.msg || '';
-  if(e.l !== lunch){ e.l = lunch; e.lc.textContent = lunch ? '점심 '+lunch : ''; e.lc.style.display = lunch ? 'block' : 'none'; }
+  const msg = s.msg || '';
   const ico = isEmoji(s.ic) ? s.ic : isEmoji(s.ico) ? s.ico : '📌';
   if(e.m !== msg || e.ico !== ico){ e.m = msg; e.ico = ico; e.bb.textContent = ico+' '+msg; e.bb.style.display = msg ? 'block' : 'none'; }
   const cbOn = (e.cbUntil||0) > performance.now();                      // 채팅 말풍선은 5초만 표시
@@ -1649,6 +1648,7 @@ function makeOrn(o){
   const drop = .3, inner = sw.children; inner.forEach(c => c.position.y -= drop);   // 고리에 실로 매달기
   const th = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0, -drop + topY + .02, 0)]), new THREE.LineBasicMaterial({color:0xf0d27a}));
   sw.add(th);
+  const pad = new THREE.Mesh(new THREE.SphereGeometry(.3, 8, 6), new THREE.MeshBasicMaterial({visible:false})); pad.position.y = -drop; sw.add(pad); hit.push(pad);   // 작은 오너먼트도 누르기 쉽게
   hit.forEach(h => h.userData.orn = o);
   return {pivot, sw, hit, ph:rnd(orns.size + 3)*6.28};
 }
@@ -1685,6 +1685,39 @@ function pickSlot(){
 
 // ---- 오너먼트 만들기 창 ----
 const ornModal = $('ornModal'), ornCv = $('ornCv'), ornBtn = $('ornBtn'), ornTip = $('ornTip');
+// ---- 오너먼트 확대 보기: 트리의 오너먼트를 클릭하면 크게 보이고, ✕ 또는 바깥 화면을 누르면 닫힘 ----
+const ornZoom = $('ornZoom'), ornZoomCv = $('ornZoomCv');
+let zoomSeq = 0, zoomAt = 0;
+function paintZoom(o, S){
+  const g = ornZoomCv.getContext('2d'); g.clearRect(0, 0, S, S);
+  const top = ORN_TOP[o.ty]*S, hx = S/2, ry = top - S*.02;
+  const glow = g.createRadialGradient(hx, S*.55, S*.1, hx, S*.55, S*.55); glow.addColorStop(0, 'rgba(255,240,200,.22)'); glow.addColorStop(1, 'rgba(255,240,200,0)');
+  g.fillStyle = glow; g.fillRect(0, 0, S, S);                                              // 뒤쪽 은은한 빛
+  g.strokeStyle = '#f0d27a'; g.lineWidth = Math.max(2, S/170); g.beginPath(); g.moveTo(hx, 0); g.lineTo(hx, ry - S*.025); g.stroke();   // 매달린 실
+  drawOrnBase(g, o.ty, o.col, S, false);                                                   // 기본 디자인
+  const finish = () => {                                                                   // 테두리 + 금색 고리
+    g.save(); silPath(g, o.ty, S); g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = S*.008; g.stroke(); g.restore();
+    g.strokeStyle = '#e3b53b'; g.lineWidth = S*.012; g.beginPath(); g.arc(hx, ry, S*.025, 0, 7); g.stroke();
+  };
+  if(o.img){                                                                               // 직접 꾸민 오너먼트면 그림을 덮어 그림
+    const my = ++zoomSeq, im = new Image();
+    im.onload = () => { if(my !== zoomSeq) return;
+      g.save(); silPath(g, o.ty, S); g.clip(); g.clearRect(0, 0, S, S); g.drawImage(im, 0, 0, S, S);
+      g.fillStyle = 'rgba(255,255,255,.3)'; g.beginPath(); g.ellipse(S*92/256, S*82/256, S*26/256, S*14/256, -.6, 0, 7); g.fill(); g.restore(); finish(); };
+    im.src = o.img;
+  }
+  finish();
+}
+function openZoom(o){
+  ornTip.hidden = true; paintZoom(o, 512);
+  const ty = ORN_TYPES[o.ty] || ORN_TYPES[0];
+  $('ornZoomCap').textContent = `${ty[1]} ${ty[0]} · 🎄 ${o.by || '누군가'} 님의 오너먼트`;
+  ornZoom.hidden = false; zoomAt = performance.now();
+  for(const k in keys) delete keys[k]; target = null;
+}
+function closeZoom(){ ornZoom.hidden = true; zoomSeq++; }
+ornZoom.addEventListener('click', e => { if(e.target === ornZoom && performance.now() - zoomAt > 250) closeZoom(); });   // 바깥 화면 클릭
+$('ornZoomClose').onclick = closeZoom;                                                      // ✕ 버튼
 const nearTree = () => joined && me.seat < 0 && !busy() && Math.hypot(me.x - TREE.x, me.z - TREE.z) < 4.8;
 function paintOrnDesign(){
   const g = ornDesign.getContext('2d'); g.clearRect(0,0,256,256);
@@ -1842,7 +1875,7 @@ function thudSound(vol=1){
 
 /* ---------- 상태·네트워크 ---------- */
 const players = {};
-const me = {id:Math.random().toString(36).slice(2,9), name:'', x:0, z:10.5, r:0, seat:-1, lunch:'', msg:'', color:'', bot:'', hcol:'', outfit:0, hair:0, scr:0, hit:0, punchT:-9, ico:'📌', hop:0, hopT:-9, cof:0, cofT:-99, dance:0, afk:0, fall:0, fallT:-99, paper:0, pf:0, pu:0, pv:0, kick:0, kp:0, kickT:-9, jump:0, jw:0, jumpT:null, jfrom:null, flip:0, fd:0};
+const me = {id:Math.random().toString(36).slice(2,9), name:'', x:0, z:10.5, r:0, seat:-1, msg:'', color:'', bot:'', hcol:'', outfit:0, hair:0, scr:0, hit:0, punchT:-9, ico:'📌', hop:0, hopT:-9, cof:0, cofT:-99, dance:0, afk:0, fall:0, fallT:-99, paper:0, pf:0, pu:0, pv:0, kick:0, kp:0, kickT:-9, jump:0, jw:0, jumpT:null, jfrom:null, flip:0, fd:0};
 let target = null, joined = false, net = null, camX = 0, camZ = 8;
 const keys = {};
 
@@ -1959,7 +1992,7 @@ chatIn.addEventListener('keydown', e => { if(e.isComposing) return; if(e.key ===
 
 let lastSent = '', lastT = 0;
 function broadcast(force){
-  const d = {name:me.name, x:+me.x.toFixed(2), z:+me.z.toFixed(2), r:+me.r.toFixed(2), seat:me.seat, lunch:me.lunch, msg:me.msg, color:me.color, bot:me.bot, hcol:me.hcol, outfit:me.outfit, hair:me.hair, scr:me.scr, hit:me.hit, ic:me.ico, cof:me.cof, dance:me.dance, afk:me.afk, fall:me.fall, hop:me.hop, paper:me.paper, pf:me.pf, pu:me.pu, pv:me.pv, kick:me.kick, kp:me.kp, jump:me.jump, jw:me.jw, flip:me.flip, fd:me.fd};
+  const d = {name:me.name, x:+me.x.toFixed(2), z:+me.z.toFixed(2), r:+me.r.toFixed(2), seat:me.seat, msg:me.msg, color:me.color, bot:me.bot, hcol:me.hcol, outfit:me.outfit, hair:me.hair, scr:me.scr, hit:me.hit, ic:me.ico, cof:me.cof, dance:me.dance, afk:me.afk, fall:me.fall, hop:me.hop, paper:me.paper, pf:me.pf, pu:me.pu, pv:me.pv, kick:me.kick, kp:me.kp, jump:me.jump, jw:me.jw, flip:me.flip, fd:me.fd};
   const s = JSON.stringify(d), now = Date.now();
   if(!force && ((s === lastSent && now-lastT < 5000) || now-lastT < 100)) return;
   lastSent = s; lastT = now; net.send(d);
@@ -2000,6 +2033,7 @@ const MOVE = ['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'];
 const CODE = {KeyW:'w',KeyA:'a',KeyS:'s',KeyD:'d',KeyF:'f',KeyG:'g',KeyT:'t',KeyE:'e',KeyX:'x',KeyB:'b',KeyQ:'q',KeyC:'c',KeyO:'o',Space:' ',ArrowUp:'arrowup',ArrowDown:'arrowdown',ArrowLeft:'arrowleft',ArrowRight:'arrowright'};
 const kname = e => CODE[e.code] || e.key.toLowerCase();
 addEventListener('keydown', e => {
+  if(!ornZoom.hidden){ if(e.key === 'Escape') closeZoom(); return; }
   if(!wbModal.hidden){ if(e.key === 'Escape') closeWb(); return; }
   if(!ornModal.hidden){ if(e.key === 'Escape') closeOrn(); return; }     // 오너먼트 꾸미는 중엔 게임 키 막기        // 화이트보드 그리는 중엔 게임 키 막기
   if(!joined || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
@@ -2043,19 +2077,20 @@ cvEl.addEventListener('pointermove', e => {
 cvEl.addEventListener('pointerup', e => {
   if(drag && !drag.moved && joined){
     ray.setFromCamera({x:e.clientX/innerWidth*2-1, y:-(e.clientY/innerHeight)*2+1}, camera);
-    if(!busy() && ray.ray.intersectPlane(plane, hit)){ target = {x:hit.x, z:hit.z}; if(me.seat >= 0) standUp(); }
+    const oh = ornHit.length ? ray.intersectObjects(ornHit, false)[0] : null;
+    if(oh) openZoom(oh.object.userData.orn);                                 // 오너먼트 클릭 → 확대 보기
+    else if(!busy() && ray.ray.intersectPlane(plane, hit)){ target = {x:hit.x, z:hit.z}; if(me.seat >= 0) standUp(); }
   }
   drag = null;
 });
 cvEl.addEventListener('pointercancel', () => { drag = null; });
 $('viewBtn').onclick = () => { camYaw = 0; camPitch = PITCH0; };
-const lp = $('lunchPanel'), msgIn = $('msgIn');
+const msgIn = $('msgIn');
 const sp = $('stylePanel'), nameIn = $('nameIn');
 const pp = $('photoPanel');
-function closePanels(){ lp.hidden = sp.hidden = pp.hidden = $('emojiPanel').hidden = true; }
+function closePanels(){ sp.hidden = pp.hidden = $('emojiPanel').hidden = true; }
 function openPanel(p){ const open = p.hidden; closePanels(); p.hidden = !open; if(!p.hidden && p === sp) syncStyle(); }
 $('sit').onclick = () => joined && toggleSit();
-$('lunchBtn').onclick = () => joined && openPanel(lp);
 $('styleBtn').onclick = () => joined && openPanel(sp);
 // 꾸미기: 옷 5종 · 머리 4종 · 상의/하의/머리 색
 const OUTFITS = ['셔츠·바지','블라우스·치마','스웨트셔츠·바지','패딩·바지','반팔·반바지','환자복'], HAIRS = ['긴머리','중간머리','단발머리','남자머리'];
@@ -2129,7 +2164,6 @@ $('wbBtn').onclick = openWb;
 const cofBtn = $('cofBtn'); cofBtn.onclick = makeCoffee;
 flipBtn.onclick = flipNear;
 $('muteBtn').onclick = e => { muted = !muted; if(master) master.gain.value = muted ? 0 : 1; e.currentTarget.textContent = muted ? '🔇' : '🔊'; };
-lp.querySelectorAll('button').forEach(b => b.onclick = () => { me.lunch = b.dataset.lunch; broadcast(true); closePanels(); });
 /* 상태 아이콘: 전체 이모지 (카테고리 목록 + 직접 입력) */
 const seg = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter('ko', {granularity:'grapheme'}) : null;
 const graphemes = str => seg ? [...seg.segment(str)].map(x => x.segment) : Array.from(str);
