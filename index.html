@@ -95,7 +95,32 @@ input[type=color]{width:44px;height:36px;padding:2px;cursor:pointer}
 .chip.on{border-color:var(--accent);background:#4a5a4d}
 .pow{position:fixed;left:0;top:0;pointer-events:none;font-weight:900;font-size:28px;color:#ffd84a;-webkit-text-stroke:1px #7a3b00;text-shadow:0 2px 0 #7a3b00;animation:pow .7s ease-out forwards}
 @keyframes pow{from{opacity:1;transform:translate(-50%,-50%) scale(.6)}to{opacity:0;transform:translate(-50%,-220%) scale(1.5)}}
+button b{font-weight:inherit}
+#actRow button{border-color:var(--accent);background:#3f4f43}
 @media(max-width:600px){#hint{display:none}}
+/* 📱 휴대폰: 아이콘만 한 줄 (옆으로 밀어서 더 보기), 상황 버튼은 크게, 채팅·입력칸 작게 */
+@media(max-width:700px),(max-height:500px){
+  #ui{bottom:calc(8px + env(safe-area-inset-bottom,0px));gap:6px;width:calc(100% - 16px);max-width:none}
+  .row{padding:6px 8px;gap:6px;font-size:13px}
+  #mainRow{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;width:100%;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  #mainRow::-webkit-scrollbar{display:none}
+  #mainRow button{flex:1 1 0;min-width:34px;padding:7px 0;font-size:18px;line-height:1.1}   /* 화면 너비에 맞춰 똑같이 나눔 */
+  #mainRow .tx,#hint,.key{display:none}
+  #count{flex:0 0 auto;font-size:12px;white-space:nowrap;opacity:.85;padding:0 2px}
+  #actRow button{padding:9px 12px;font-size:15px}
+  #msgRow{flex-wrap:nowrap;width:100%}
+  #msgIn{flex:1 1 auto;min-width:0;width:auto}
+  #msgClear{display:none}
+  #msgRow button{padding:7px 10px;flex:0 0 auto}
+  #msgIn,#chatIn,#nameIn,#emojiIn,#ornText{font-size:16px}           /* 아이폰에서 입력할 때 화면이 확대되지 않게 */
+  #stylePanel,#emojiPanel,#photoPanel,#lunchPanel{max-height:46vh;overflow-y:auto;width:100%}
+  .hue{width:100px!important}
+  #chat{width:min(250px,64vw);gap:4px}
+  #chatLog{max-height:84px;font-size:12px;padding:6px 8px}
+  #chatIn{padding:6px 8px}
+  .toast{top:calc(132px + env(safe-area-inset-top,0px));font-size:13px}
+  .tag{font-size:11px}
+}
 </style>
 </head>
 <body>
@@ -136,26 +161,28 @@ input[type=color]{width:44px;height:36px;padding:2px;cursor:pointer}
   <div class="row" id="msgRow">
     <button id="icoBtn" title="상태 아이콘 고르기" aria-label="상태 아이콘 고르기">📌</button>
     <input id="msgIn" maxlength="30" placeholder="상태메세지 (계속 표시, 30자)" autocomplete="off" size="26">
-    <button id="msgOk">설정</button>
+    <button id="msgOk" aria-label="상태메세지 설정">설정</button>
     <button id="msgClear">지우기</button>
   </div>
-  <div class="row">
-    <button id="sit">🪑 앉기·눕기 (E)</button>
-    <button id="hopBtn">🦘 점프 (Space)</button>
-    <button id="danceBtn">💃 춤 (B)</button>
-    <button id="lunchBtn">점심</button>
-    <button id="styleBtn">꾸미기</button>
-    <button id="photoBtn">🖼 사진</button>
+  <div class="row" id="actRow" hidden>
+    <button id="hitBtn" hidden aria-label="때리기" title="때리기"><b>🥊</b><span class="tx"> 때리기</span><span class="key"> (F)</span></button>
+    <button id="paperBtn" hidden aria-label="종이 던지기" title="종이 던지기"><b>🧻</b><span class="tx"> 종이 던지기</span><span class="key"> (T)</span></button>
+    <button id="kickBtn" hidden aria-label="화분 차기" title="화분 차기"><b>🦶</b><span class="tx"> 화분 차기</span><span class="key"> (F)</span></button>
+    <button id="winBtn" hidden aria-label="창문 탈출" title="창문 탈출"><b>🪟</b><span class="tx"> 창문 탈출</span><span class="key"> (X)</span></button>
+    <button id="wbBtn" hidden aria-label="화이트보드" title="화이트보드"><b>🖍</b><span class="tx"> 화이트보드</span><span class="key"> (Q)</span></button>
+    <button id="cofBtn" hidden aria-label="커피 내리기" title="커피 내리기"><b>☕</b><span class="tx"> 커피 내리기</span><span class="key"> (C)</span></button>
+    <button id="ornBtn" hidden aria-label="오너먼트 달기" title="오너먼트 달기"><b>🎄</b><span class="tx"> 오너먼트 달기</span><span class="key"> (O)</span></button>
+    <button id="flipBtn" hidden aria-label="책상 엎기" title="책상 엎기"><b>🙃</b><span class="tx"> 책상 엎기</span><span class="key"> (G)</span></button>
+  </div>
+  <div class="row" id="mainRow">
+    <button id="sit" aria-label="앉기·눕기" title="앉기·눕기"><b>🪑</b><span class="tx"> 앉기·눕기</span><span class="key"> (E)</span></button>
+    <button id="hopBtn" aria-label="점프" title="점프"><b>🦘</b><span class="tx"> 점프</span><span class="key"> (Space)</span></button>
+    <button id="danceBtn" aria-label="춤" title="춤"><b>💃</b><span class="tx"> 춤</span><span class="key"> (B)</span></button>
+    <button id="lunchBtn" aria-label="점심" title="점심"><b>🍱</b><span class="tx"> 점심</span></button>
+    <button id="styleBtn" aria-label="꾸미기" title="꾸미기"><b>👕</b><span class="tx"> 꾸미기</span></button>
+    <button id="photoBtn" aria-label="사진" title="사진"><b>🖼</b><span class="tx"> 사진</span></button>
     <button id="viewBtn" title="시점 처음으로" aria-label="시점 초기화">🎥</button>
     <button id="muteBtn" title="효과음 켜기/끄기" aria-label="효과음">🔊</button>
-    <button id="hitBtn" hidden>🥊 때리기 (F)</button>
-    <button id="paperBtn" hidden>🧻 종이 던지기 (T)</button>
-    <button id="kickBtn" hidden>🦶 화분 차기 (F)</button>
-    <button id="winBtn" hidden>🪟 창문 탈출 (X)</button>
-    <button id="wbBtn" hidden>🖍 화이트보드 (Q)</button>
-    <button id="cofBtn" hidden>☕ 커피 내리기 (C)</button>
-    <button id="ornBtn" hidden>🎄 오너먼트 달기 (O)</button>
-    <button id="flipBtn" hidden>🙃 책상 엎기 (G)</button>
     <span id="count"></span>
     <span id="hint">WASD 이동 · Space 점프 · E 앉기·눕기 · F 때리기/차기 · C 커피 · O 오너먼트 · G 책상 엎기 · T 종이 · X 창문 · B 춤 · Q 화이트보드 · Enter 채팅</span>
   </div>
@@ -219,7 +246,9 @@ renderer.shadowMap.enabled = true;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x2b2d2a);
 const camera = new THREE.PerspectiveCamera(42, 1, .1, 100);
-function resize(){ renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); }
+function resize(){ renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth/innerHeight;
+  camera.fov = camera.aspect < 1 ? Math.min(64, 42 + (1 - camera.aspect)*36) : 42;   // 세로 화면(휴대폰)에서는 더 넓게 보이게
+  camera.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
 
 const hemi = new THREE.HemisphereLight(0xfff4e0, 0x8a8678, 1.1); scene.add(hemi);
@@ -2030,7 +2059,7 @@ function punch(){
   me.hit++; me.punchT = now/1000; broadcast(true); dinoHit();
 }
 hitBtn.onclick = punch;
-const wbBtn = $('wbBtn'), danceBtn = $('danceBtn');
+const wbBtn = $('wbBtn'), danceBtn = $('danceBtn'), actRow = $('actRow');
 const winBtn = $('winBtn'), flipBtn = $('flipBtn'), kickBtn = $('kickBtn');
 kickBtn.onclick = kick;
 const paperBtn = $('paperBtn'); paperBtn.onclick = throwMine;
@@ -2197,7 +2226,8 @@ function frame(now){
   updateOrns(t);
   updateBrew(dt, t);
   if(joined && me.dance && (meMoving || me.seat >= 0 || busy())){ me.dance = 0; broadcast(true); }   // 움직이거나 앉으면 춤 멈춤
-  const dl = me.dance ? '💃 춤 멈추기 (B)' : '💃 춤 (B)'; if(danceBtn.textContent !== dl) danceBtn.textContent = dl;
+  if(danceBtn.dataset.on !== String(me.dance)){ danceBtn.dataset.on = String(me.dance); danceBtn.querySelector('.tx').textContent = me.dance ? ' 춤 멈추기' : ' 춤'; danceBtn.querySelector('b').textContent = me.dance ? '⏹' : '💃'; }
+  const anyAct = [...actRow.children].some(b => !b.hidden); if(actRow.hidden === anyAct) actRow.hidden = !anyAct;   // 상황 버튼이 있을 때만 그 줄을 보여 줌
   const fx = joined ? me.x*.7 : 0, fz = joined ? me.z : 5;
   camX += (fx-camX)*Math.min(1,dt*4); camZ += (fz-camZ)*Math.min(1,dt*4);
   const D = 16.3, ce = Math.cos(camPitch), sy = Math.sin(camYaw), cy = Math.cos(camYaw);
@@ -2206,7 +2236,7 @@ function frame(now){
   wallsBack.forEach(m => m.visible = camera.position.z > -7.6);          // 벽 바깥으로 돌면 그 벽은 숨김
   updateGlass(dt, t, camera.position.z > -7.6); updateView(t, camera.position.z > -7.6);
   wallL.visible = camera.position.x > -14.6; frames.forEach(f => f.border.visible = f.pic.visible = wallL.visible); wallR.visible = camera.position.x < 14.6; wallF.visible = camera.position.z < 17.8;
-  $('count').textContent = `접속 ${fresh().length+(joined?1:0)} / ${MAX}명`;
+  const ppl = fresh().length+(joined?1:0), ct = innerWidth <= 700 ? `👥 ${ppl}/${MAX}` : `접속 ${ppl} / ${MAX}명`; if($('count').textContent !== ct) $('count').textContent = ct;
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
